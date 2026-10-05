@@ -16,6 +16,16 @@ pub struct Ws2812 {
     offset: u32,
 }
 
+// Safety: `Ws2812` contains only scalar configuration values and an opaque pointer to the
+// memory-mapped PIO peripheral. The pointer does not point to Rust-managed memory, and moving it
+// to another thread cannot create aliases to Rust data.
+//
+// The state machine identifier is obtained by claiming an unused state machine, which is
+// exclusively owned by this instance for its lifetime. Consequently, transferring `Ws2812` between
+// threads does not violate Rust's aliasing or thread-safety requirements, provided the claimed
+// state machine is not independently accessed through the raw PIO API.
+unsafe impl Send for Ws2812 {}
+
 impl Ws2812 {
     pub fn new(gpio: u32) -> Result<Self, String> {
         unsafe {
